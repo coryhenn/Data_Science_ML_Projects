@@ -1,5 +1,5 @@
 ---
-title: "IFNy Exp2 ELISA WT"
+title: "ELISA Predictor"
 author: "Cory Henn"
 format: html
 editor: visual
@@ -20,14 +20,14 @@ library(ggpubr)
 ## Read in dataset
 
 ```{r}
-# Read an Excel file
+# Read an Excel file (change this to your specific file path)
 data <- read_excel("IFNy_ELISA_WT_Exp2_C_11_Apr_24_clean.xlsx")
 ```
 
 ## Reverse the order of the standard curve gradient to match the reader
 
 ```{r}
-# Reverse the order of columns (excluding the first column) for rows 21-35
+# Reverse the order of columns
 data[21:35, -1] <- lapply(data[21:35, -1], rev)
 print(data)
 ```
@@ -102,7 +102,7 @@ newdata <- data.frame(Identifier = samples$Sample, Mean = as.numeric(samples$Mea
 
 ```
 
-## Predict the concentrations of the IFNy present in the samples
+## Predict the concentrations of the antibody present in the samples
 
 ```{r}
 # Use the predict function to predict Concentration based on Mean (Absorbance)
