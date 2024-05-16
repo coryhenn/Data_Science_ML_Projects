@@ -1,0 +1,215 @@
+---
+title: "IFNy Exp2 ELISA WT"
+author: "Cory Henn"
+format: html
+editor: visual
+---
+
+# Preprocessing and Data Cleaning
+
+## Load in libraries
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(readxl)
+library(dplyr)
+library(ggpubr)
+```
+
+## Read in dataset
+
+```{r}
+# Read an Excel file
+data <- read_excel("IFNy_ELISA_WT_Exp2_C_11_Apr_24_clean.xlsx")
+```
+
+## Reverse the order of the standard curve gradient to match the reader
+
+```{r}
+# Reverse the order of columns (excluding the first column) for rows 21-35
+data[21:35, -1] <- lapply(data[21:35, -1], rev)
+print(data)
+```
+
+## Subset the data from the standard curve into a new df named standard_curve
+
+```{r}
+# Subset the data to include only rows 21-35 and columns 2 (Concentration) and 5 (Mean)
+standard_curve <- data[21:35, c(2, 5)]
+# Remove rows with NA values
+standard_curve <- na.omit(standard_curve)
+```
+
+## Subset the samples information from the original df for processing
+
+```{r}
+# Relevant sample information is in rows 42 - 114 (All samples) and columns
+# 1 and 4 (Sample ID and mean (absorbance))
+samples <- data[42:114, c(1, 4)]
+# NAs are ommitted to avoid later problems
+samples <- na.omit(samples)
+print(samples)
+```
+
+## Columns in standard curve df and samples df are renamed
+
+```{r}
+# Rename the columns for easier reference
+colnames(standard_curve) <- c("Concentration", "Mean")
+colnames(samples) <- c("Sample", "Mean")
+print(standard_curve)
+print(samples)
+
+# Convert Concentration and Mean to numeric
+standard_curve$Concentration <- as.numeric(standard_curve$Concentration)
+standard_curve$Mean <- as.numeric(standard_curve$Mean)
+
+# Check for NA values again
+print(sum(is.na(standard_curve$Concentration)))
+print(sum(is.na(standard_curve$Mean)))
+```
+
+# Run Analyses on the Data
+
+## Calculate the correlation in the standard_curve between concentration and Mean (Absorbance)
+
+```{r}
+# Calculate the correlation
+correlation <- cor(standard_curve$Concentration, standard_curve$Mean)
+print(paste("Correlation coefficient:", correlation))
+```
+
+## Fit the curve, build a linear model, and plot the model for inspection
+
+```{r}
+# Fit a curve to the standard_curve data
+model <- lm(Concentration ~ Mean, data = standard_curve)
+
+# Plot the data points and the fitted curve
+plot(standard_curve$Mean, standard_curve$Concentration, xlab = "Absorbance", ylab = "Concentration", main = "Standard Protein Curve")
+abline(model, col = "red")
+
+# Print the summary of the model
+summary(model)
+```
+
+## Create a new df to feed to the predictor function
+
+```{r}
+# Data frame with identifiers and Mean values
+newdata <- data.frame(Identifier = samples$Sample, Mean = as.numeric(samples$Mean))
+
+```
+
+## Predict the concentrations of the IFNy present in the samples
+
+```{r}
+# Use the predict function to predict Concentration based on Mean (Absorbance)
+predicted_concentration <- predict(model, newdata = newdata)
+
+# Print predicted concentrations
+print(predicted_concentration)
+```
+
+## Turn the predictions into a data frame
+
+```{r}
+# Create a new dataframe with predictions as rows
+prediction_df <- data.frame(Identifier = samples$Sample, Predicted_Concentration = predicted_concentration)
+
+# Print the prediction dataframe
+print(prediction_df)
+```
+
+## Set up the df for ANOVA with Tukey's post hoc
+
+```{r}
+# Extract day and sample type from Identifier
+prediction_df_tph <- prediction_df %>%
+  separate(Identifier, into = c("Mouse", "Day", "Sample_Type"), sep = " ") %>%
+  mutate(Treatment_Group = paste(Day, Sample_Type, sep = " "))
+```
+
+## Aggregate the means of each treatment group
+
+```{r}
+# Aggregate the Predicted Concentration for each Treatment_Group
+prediction_df_tph_agg <- prediction_df_tph %>%
+  group_by(Treatment_Group) %>%
+  summarize(Avg_Predicted_Concentration = mean(Predicted_Concentration))
+```
+
+## Perform one-way ANOVA of treatment groups
+
+```{r}
+# Perform one-way ANOVA
+anova_result <- aov(Predicted_Concentration ~ Treatment_Group, data = prediction_df_tph)
+summary(anova_result)
+```
+
+## Apply Tukey's post hoc test for significance
+
+```{r}
+# Perform Tukey post hoc test
+tukey_result <- TukeyHSD(anova_result)
+
+print(tukey_result)
+```
+
+## Turn the Tukey's post hoc results into a df
+
+```{r}
+# Extract relevant information
+tukey_df <- as.data.frame(tukey_result$`Treatment_Group`)
+# Convert row names to a new column
+tukey_df <- tukey_df %>%
+  rownames_to_column(var = "Treatment_Group")
+```
+
+## Extract the significant relationships from Tukey's post hoc
+
+```{r}
+# Filter Tukey results for significant comparisons
+significant_comparisons <- tukey_df[tukey_df$`p adj` < 0.05, ]
+print(significant_comparisons)
+```
+
+## Plot Tukey's post hoc intervals
+
+```{r}
+par(mfrow=c(1,1), mar=c(5, 6, 3, 2))  # Set margins to adjust plot size
+plot(tukey_result, col="black", cex.axis=0.60, las=2)
+```
+
+## Plot the aggregated treatment groups
+
+```{r}
+ggplot(prediction_df_tph_agg, aes(x = Treatment_Group, y = Avg_Predicted_Concentration)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "", y = "Concentration (pg/mL)") +
+  ggtitle("IFNy Expression in WT ME49 Infection") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid.major = element_line(color = "lightgray"),
+        panel.grid.minor = element_line(color = "lightgray"),
+        plot.title = element_text(hjust = 0.5, size = 16)) +  # Center and adjust title size
+  theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"))  # Shrink the plot
+
+```
+
+```{r}
+# Plot the data with jitter and transparency
+ggplot(prediction_df_tph, aes(x = Treatment_Group, y = predicted_concentration, color = Mouse)) +
+  geom_jitter(position = position_dodge(width = 0.1), size = 3, alpha = 0.5) +  # Add jitter and transparency
+  labs(x = "", y = "Concentration (pg/mL)") +
+  ggtitle("IFNy Expression in WT ME49 Infection") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid.major = element_line(color = "lightgray"),
+        panel.grid.minor = element_line(color = "lightgray"),
+        plot.title = element_text(hjust = 0.5, size = 16)) +  # Center and adjust title size
+  theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"))  # Shrink the plot
+```
+
+
