@@ -27,7 +27,7 @@ data <- read_excel("path/to/your/file.xlsx")
 ## Reverse the order of the standard curve gradient to match the reader
 
 ```{r}
-# Reverse the order of columns
+# Reverse the order of columns not necessary, but helps in readability. Alternatively, just subset the data of interest
 data[21:35, -1] <- lapply(data[21:35, -1], rev)
 print(data)
 ```
