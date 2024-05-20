@@ -21,7 +21,7 @@ library(ggpubr)
 
 ```{r}
 # Read an Excel file (change this to your specific file path)
-data <- read_excel("IFNy_ELISA_WT_Exp2_C_11_Apr_24_clean.xlsx")
+data <- read_excel("path/to/your/file.xlsx")
 ```
 
 ## Reverse the order of the standard curve gradient to match the reader
