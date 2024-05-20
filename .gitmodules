@@ -1,0 +1,3 @@
+[submodule "scMilvus"]
+	path = scMilvus
+	url = git@github.com:coryhenn/scMilvus.git
