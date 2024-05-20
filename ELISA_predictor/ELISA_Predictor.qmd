@@ -185,31 +185,42 @@ plot(tukey_result, col="black", cex.axis=0.60, las=2)
 ## Plot the aggregated treatment groups
 
 ```{r}
-ggplot(prediction_df_tph_agg, aes(x = Treatment_Group, y = Avg_Predicted_Concentration)) +
+# Create a variable for different shades of grey
+num_groups <- length(unique(prediction_df_tph_agg$Treatment_Group))
+grey_values <- scales::grey_pal(start = 0.9, end = 0.5)(num_groups)
+
+# Plot with different shades of light grey
+ggplot(prediction_df_tph_agg, aes(x = Treatment_Group, y = Avg_Predicted_Concentration, fill = as.factor(Treatment_Group))) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(x = "", y = "Concentration (pg/mL)") +
-  ggtitle("IFNy Expression in WT ME49 Infection") +
+  ggtitle("Expression in Mice") +
+  scale_fill_manual(values = grey_values) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        panel.grid.major = element_line(color = "lightgray"),
-        panel.grid.minor = element_line(color = "lightgray"),
-        plot.title = element_text(hjust = 0.5, size = 16)) +  # Center and adjust title size
-  theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"))  # Shrink the plot
-
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 12, color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),
+    axis.title.y = element_text(size = 14),
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    legend.position = "none",
+    panel.grid.major = element_line(color = "lightgray"),
+    panel.grid.minor = element_blank()
+  )
 ```
 
 ```{r}
-# Plot the data with jitter and transparency
+# Plot data with jitter and transparency
 ggplot(prediction_df_tph, aes(x = Treatment_Group, y = predicted_concentration, color = Mouse)) +
   geom_jitter(position = position_dodge(width = 0.1), size = 3, alpha = 0.5) +  # Add jitter and transparency
   labs(x = "", y = "Concentration (pg/mL)") +
-  ggtitle("IFNy Expression in WT ME49 Infection") +
+  ggtitle("Expression in Mice") +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        panel.grid.major = element_line(color = "lightgray"),
-        panel.grid.minor = element_line(color = "lightgray"),
-        plot.title = element_text(hjust = 0.5, size = 16)) +  # Center and adjust title size
-  theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"))  # Shrink the plot
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 12, color = "black"),
+    axis.text.y = element_text(size = 12, color = "black"),
+    axis.title.y = element_text(size = 14),
+    plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),
+    panel.grid.major = element_line(color = "lightgray"),
+    panel.grid.minor = element_line(color = "lightgray")) + 
+  theme(plot.margin = margin(0.7, 0.7, 0.7, 0.7, "cm"))  # Shrink the plot
+  
 ```
-
-
