@@ -3,5 +3,5 @@ This program, written in R Quarto, is intended to predict concentrations of mole
 
 # Plots Produced
 
-![Optical Density Standard Curve with LM Fit](Data_Science_ML_Projects/ELISA_predictor/images/ELSIA_SC.tiff)
+![Optical Density Standard Curve with LM Fit](ELISA_predictor/images/ELISA_SC.tiff)
 
