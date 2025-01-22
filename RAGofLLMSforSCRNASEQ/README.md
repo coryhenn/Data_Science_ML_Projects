@@ -9,6 +9,5 @@ This model allows for standard scRNAseq analysis workflow with the addition of c
 
 **'PBMC.ipynb'** - Standard scRNAseq pipeline using scanpy to generate clusters from scRNAseq data.
 
-**prepare_testdata.py'** - Reads test audio files from ./data/test folder. Reads all the audio file and output a CSV file (./test_data.csv) for testing in current directory. 
+**scRAG.ipynb'** - Generates an annotation prediction using GPT4-o along with RAG implementation of PubMed article data
 
-**'runMLP.py'** - Create and save MLP model using the training and validation features data.
